@@ -1,0 +1,8 @@
+.marquee-card {
+  perspective: 1000px;
+}
+
+.img_card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}

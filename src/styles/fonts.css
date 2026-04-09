@@ -1,0 +1,30 @@
+@font-face {
+  font-family: pp_bold;
+  src: url("../../public/fonts/PPNeueMontreal-Bold.l3ulKZJq.woff2");
+}
+@font-face {
+  font-family: pp_medium;
+  src: url("../../public/fonts/PPNeueMontreal-Medium.BCmCQQaX.woff2");
+}
+@font-face {
+  font-family: pp_mono;
+  src: url("../../public/fonts/PPNeueMontrealMono-Medium.DUem7D_U.woff2");
+}
+
+html,
+body {
+  font-size: 14px;
+  font-family: pp_medium, Arial, Helvetica, sans-serif;
+}
+.bold{
+  font-family: pp_bold, Arial, Helvetica, sans-serif;
+}
+.pp_mono{
+  font-family: pp_mono, Arial, Helvetica, sans-serif;
+}
+@media (min-width: 750px) {
+  html,
+  body {
+    font-size: 1vw;
+  }
+}

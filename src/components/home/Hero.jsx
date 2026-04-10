@@ -21,9 +21,9 @@ const Hero = () => {
 
         const el = e.currentTarget;
 
-        // store Flip state
         flipState.element = el;
         flipState.state = Flip.getState(el);
+        flipState.fromSwiper = false;
 
         const allCards = document.querySelectorAll(".marquee-card");
 
@@ -40,6 +40,14 @@ const Hero = () => {
             duration: 0.4,
             ease: "expo.out",
         });
+        tl.to(".proj_id", {
+            y:20,
+            duration: 0.5,
+        }, "<")
+        tl.to(".proj_det", {
+            y:-20,
+            duration: 0.5,
+        }, "<")
 
     };
 
@@ -69,7 +77,7 @@ const Hero = () => {
                                 onDragStart={(e) => e.preventDefault()}
                                 className=" marquee-card group cursor-pointer select-none group w-[20vw] ml-5 transform-3d perspective-distant   relative">
                                 <div className="w-full inline-block overflow-hidden">
-                                    <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none translate-y-full`}>Project {project.id}</p>
+                                    <p className={` proj_id group-hover:translate-y-0 transition-all duration-300 leading-none translate-y-full`}>Project {project.id}</p>
                                 </div>
                                 <div className="img_card w-full">
                                     <img
@@ -79,7 +87,7 @@ const Hero = () => {
                                         className="select-none " />
                                 </div>
                                 <div className="w-full mt-2 inline-block overflow-hidden">
-                                    <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none -translate-y-full`}>{project.title}</p>
+                                    <p className={` proj_det group-hover:translate-y-0 transition-all duration-300 leading-none -translate-y-full`}>{project.title}</p>
                                 </div>
                             </div>
 

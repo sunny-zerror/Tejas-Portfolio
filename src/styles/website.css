@@ -6,3 +6,21 @@
   transform-style: preserve-3d;
   will-change: transform;
 }
+
+.mySwiper .swiper-wrapper {
+  align-items: center;
+}
+
+.mySwiper .swiper-slide {
+  width: 20vw !important;
+  transform: scale(0.6) !important;
+}
+
+.mySwiper .swiper-slide-active {
+  transform: scale(1) !important;
+}
+
+.mySwiper .swiper-slide-active,
+.mySwiper .swiper-slide-active * {
+  cursor: default !important;
+}

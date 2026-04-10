@@ -30,7 +30,7 @@ export default function InfiniteMarquee({
     useEffect(() => {
         if (!trackRef.current) return;
 
-        const el = trackRef.current; // ✅ stable reference
+        const el = trackRef.current; 
 
         const observer = new ResizeObserver(() => {
             setContentWidth(el.scrollWidth / 2);
@@ -82,7 +82,7 @@ export default function InfiniteMarquee({
             lastTime = time;
 
             position.current += velocity.current;
-            velocity.current *= isTouchRef.current ? 0.92 : 0.85;
+            velocity.current *= isTouchRef.current ? 0.92 : 0.95;
 
             if (Math.abs(velocity.current) < 0.01) {
                 velocity.current = 0;
@@ -123,7 +123,7 @@ export default function InfiniteMarquee({
 
         const applyScrollDelta = (delta) => {
             if (delta !== 0) {
-                velocity.current -= delta * (speed / 900);
+                velocity.current -= delta * (speed / 1000);
             }
         };
 
@@ -151,25 +151,7 @@ export default function InfiniteMarquee({
         };
     }, [speed]);
 
-    useEffect(() => {
-        if (!containerRef.current) return;
-
-        const el = containerRef.current;
-
-        const onWheelCapture = (e) => {
-            if (Math.abs(e.deltaX) > 0) {
-                e.preventDefault();
-            }
-        };
-
-        el.addEventListener("wheel", onWheelCapture, { passive: false });
-
-        return () => {
-            el.removeEventListener("wheel", onWheelCapture);
-        };
-    }, []);
-
-    useEffect(() => {
+        useEffect(() => {
         if (!draggable || !containerRef.current) return;
 
         const el = containerRef.current;
@@ -233,6 +215,24 @@ export default function InfiniteMarquee({
             el.removeEventListener("pointerleave", stopDrag);
         };
     }, [draggable]);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const el = containerRef.current;
+
+        const onWheelCapture = (e) => {
+            if (Math.abs(e.deltaX) > 0) {
+                e.preventDefault();
+            }
+        };
+
+        el.addEventListener("wheel", onWheelCapture, { passive: false });
+
+        return () => {
+            el.removeEventListener("wheel", onWheelCapture);
+        };
+    }, []);
 
     return (
         <div

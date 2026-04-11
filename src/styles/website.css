@@ -12,7 +12,6 @@
 }
 
 .mySwiper .swiper-slide {
-  width: 20vw !important;
   transform: scale(0.6) !important;
 }
 
@@ -23,4 +22,9 @@
 .mySwiper .swiper-slide-active,
 .mySwiper .swiper-slide-active * {
   cursor: default !important;
+}
+
+.active_bar{
+  height: 3rem;
+  border-color: black;
 }

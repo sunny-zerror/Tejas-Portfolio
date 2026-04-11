@@ -30,7 +30,7 @@ export default function InfiniteMarquee({
     useEffect(() => {
         if (!trackRef.current) return;
 
-        const el = trackRef.current; 
+        const el = trackRef.current;
 
         const observer = new ResizeObserver(() => {
             setContentWidth(el.scrollWidth / 2);
@@ -151,7 +151,7 @@ export default function InfiniteMarquee({
         };
     }, [speed]);
 
-        useEffect(() => {
+    useEffect(() => {
         if (!draggable || !containerRef.current) return;
 
         const el = containerRef.current;
@@ -245,11 +245,12 @@ export default function InfiniteMarquee({
         >
             <div
                 ref={trackRef}
-                className="inline-flex select-none will-change-transform"
+                className="inline-flex items-end select-none will-change-transform"
             >
                 {children}
                 {children}
             </div>
+
         </div>
     );
 }

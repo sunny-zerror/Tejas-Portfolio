@@ -9,6 +9,7 @@ import { Link } from "next-view-transitions";
 import { useGSAP } from "@gsap/react";
 import { Swiper, SwiperSlide } from "swiper/react"
 import "swiper/css"
+import { sound } from "@/utils/sound";
 
 gsap.registerPlugin(Flip);
 
@@ -25,9 +26,10 @@ export default function ProjectDetail() {
     );
 
     const handleSlideClick = (index, proj) => {
-        if(index === activeIndex) return;
+        if (index === activeIndex) return;
         const swiper = swiperRef.current;
         if (!swiper) return;
+        sound.playClick()
 
         flipState.fromSwiper = true;
         swiper.slideToLoop(index);
@@ -67,7 +69,7 @@ export default function ProjectDetail() {
 
         Flip.from(flipState.state, {
             targets: el,
-            duration: 1,
+            duration: .7,
             ease: "power3.inOut",
             absolute: true,
         });
@@ -76,11 +78,17 @@ export default function ProjectDetail() {
     }, [project]);
 
     useGSAP(() => {
-        const tl = gsap.timeline({ delay: flipState.fromSwiper ? 0 : 1 });
+        const tl = gsap.timeline({ delay: flipState.fromSwiper ? 0 : .5 });
         if (!flipState.fromSwiper) {
             tl.to(".box2", {
                 opacity: 1,
                 ease: "expo.out",
+            })
+        } else {
+            gsap.to(".box2", {
+                opacity: 0,
+                delay:.5,
+                duration:0.1
             })
         }
         tl.to([".anim_txt", ".close_btn"], {
@@ -92,8 +100,9 @@ export default function ProjectDetail() {
         tl.to(".draw_line", {
             height: "100vh",
             ease: "expo.out",
-            duration: 1
+            duration: 0.5
         }, "<")
+        if(flipState.fromSwiper) return
         tl.to(".box2", {
             opacity: 0,
             ease: "expo.in",
@@ -128,7 +137,7 @@ export default function ProjectDetail() {
                     className={`mySwiper  relative pointer-events-auto ${flipState.fromSwiper ? "opacity-100" : "opacity-0"}  `}
                 >
                     {ProjectsData.map((proj, i) => (
-                        <SwiperSlide key={i} className="transition-all duration-500 ease-in-out">
+                        <SwiperSlide key={i} className="transition-opacity duration-500 ease-in-out w-[18.5vw]!">
                             <div
                                 onClick={() => handleSlideClick(i, proj)}
                                 className={`  w-full  relative overflow-hidden cursor-pointer`}
@@ -137,10 +146,15 @@ export default function ProjectDetail() {
                                     <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none translate-y-full`}>Project {project.id}</p>
                                 </div>
                                 <div className="img_card w-full">
-                                    <img
-                                        src={proj.img}
-                                        alt=""
-                                        className="select-none " />
+                                    {proj.img ? (
+                                        <img
+                                            src={proj.img}
+                                            alt=""
+                                            draggable={false}
+                                            className="select-none " />
+                                    ) : (
+                                        <video src={proj.vid} loop muted playsInline autoPlay></video>
+                                    )}
                                 </div>
                                 <div className="w-full mt-2 inline-block overflow-hidden">
                                     <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none -translate-y-full`}>{project.title}</p>
@@ -150,15 +164,20 @@ export default function ProjectDetail() {
                     ))}
                 </Swiper>
 
-                <div data-flip-id={`box-${project.id}`} className={`absolute box2 opacity-0  w-[20vw] pointer-events-none `}>
+                <div data-flip-id={`box-${project.id}`} className={`absolute z-10 box2 ${flipState.fromSwiper ? "opacity-100" : "opacity-0"}   w-[18.5vw] pointer-events-none `}>
                     <div className="w-full inline-block overflow-hidden">
                         <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none translate-y-full`}>Project {project.id}</p>
                     </div>
                     <div className="img_card w-full">
-                        <img
-                            src={project.img}
-                            alt=""
-                            className="select-none " />
+                        {project.img ? (
+                            <img
+                                src={project.img}
+                                alt=""
+                                draggable={false}
+                                className="select-none " />
+                        ) : (
+                            <video src={project.vid} loop muted playsInline autoPlay></video>
+                        )}
                     </div>
                     <div className="w-full mt-2 inline-block overflow-hidden">
                         <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none -translate-y-full`}>{project.title}</p>
@@ -167,7 +186,7 @@ export default function ProjectDetail() {
 
             </div>
 
-            <Link href={"/"} className={`close_btn ${flipState.fromSwiper ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[2rem]"}  text-xl z-10 fixed top-5 left-[42%] mix-blend-difference`}>
+            <Link onClick={() => sound.playClick()} href={"/"} className={`close_btn ${flipState.fromSwiper ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[2rem]"}  font-sans  text-xl leading-none z-10 fixed top-5 left-[42%] mix-blend-difference`}>
                 <span className="text-white hover:underline">
                     Close
                 </span>

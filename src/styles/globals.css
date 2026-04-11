@@ -33,7 +33,7 @@ button {
 }
 @media (min-width: 750px) {
   .padding {
-    padding: 2.5rem;
+    padding: 2rem;
   }
 }
 .cover {

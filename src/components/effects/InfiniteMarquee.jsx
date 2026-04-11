@@ -123,7 +123,7 @@ export default function InfiniteMarquee({
 
         const applyScrollDelta = (delta) => {
             if (delta !== 0) {
-                velocity.current -= delta * (speed / 1000);
+                velocity.current -= delta * (speed / 1500);
             }
         };
 
@@ -201,18 +201,18 @@ export default function InfiniteMarquee({
             pointerDownTarget.current = null;
         };
 
-        el.addEventListener("pointerdown", onPointerDown);
-        el.addEventListener("pointermove", onPointerMove);
-        el.addEventListener("pointerup", stopDrag);
-        el.addEventListener("pointercancel", stopDrag);
-        el.addEventListener("pointerleave", stopDrag);
+        window.addEventListener("pointerdown", onPointerDown);
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointerup", stopDrag);
+        window.addEventListener("pointercancel", stopDrag);
+        window.addEventListener("pointerleave", stopDrag);
 
         return () => {
-            el.removeEventListener("pointerdown", onPointerDown);
-            el.removeEventListener("pointermove", onPointerMove);
-            el.removeEventListener("pointerup", stopDrag);
-            el.removeEventListener("pointercancel", stopDrag);
-            el.removeEventListener("pointerleave", stopDrag);
+            window.removeEventListener("pointerdown", onPointerDown);
+            window.removeEventListener("pointermove", onPointerMove);
+            window.removeEventListener("pointerup", stopDrag);
+            window.removeEventListener("pointercancel", stopDrag);
+            window.removeEventListener("pointerleave", stopDrag);
         };
     }, [draggable]);
 

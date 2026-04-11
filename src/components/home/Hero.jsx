@@ -21,7 +21,7 @@ const Hero = () => {
 
     const handleClick = (project, e) => {
         if (isAnimating.current) return;
-        sound.playClick()
+        sound.play("click")
         isAnimating.current = true;
 
         const el = e.currentTarget;
@@ -65,34 +65,44 @@ const Hero = () => {
         })
     })
 
-    useEffect(() => {
-        const updateCenterTick = () => {
-            const centerX = window.innerWidth / 2;
+const activeElRef = useRef(null);
 
-            ticksRef.current.forEach((el) => {
-                const rect = el.getBoundingClientRect();
-                const elCenter = rect.left + rect.width / 2;
+useEffect(() => {
+  const updateCenterTick = () => {
+    const centerX = window.innerWidth / 2;
+    let newActive = null;
 
-                const isCenter = Math.abs(elCenter - centerX) < 5;
+    ticksRef.current.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      const elCenter = rect.left + rect.width / 2;
 
-                if (isCenter) {
-                    el.classList.add("active_bar");
-                } else {
-                    el.classList.remove("active_bar");
-                }
-            });
-        };
+      const isCenter = Math.abs(elCenter - centerX) < 5;
 
-        let raf;
-        const loop = () => {
-            updateCenterTick();
-            raf = requestAnimationFrame(loop);
-        };
+      if (isCenter) {
+        newActive = el;
+        el.classList.add("active_bar");
+      } else {
+        el.classList.remove("active_bar");
+      }
+    });
 
-        loop();
+    if (newActive && activeElRef.current !== newActive) {
+      activeElRef.current = newActive;
 
-        return () => cancelAnimationFrame(raf);
-    }, []);
+      sound.play("fx"); 
+    }
+  };
+
+  let raf;
+  const loop = () => {
+    updateCenterTick();
+    raf = requestAnimationFrame(loop);
+  };
+
+  loop();
+
+  return () => cancelAnimationFrame(raf);
+}, []);
 
     return (
         <>

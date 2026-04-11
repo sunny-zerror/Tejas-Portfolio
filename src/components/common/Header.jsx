@@ -83,7 +83,7 @@ const Header = () => {
   }, [activeTrack]);
 
   const handlePlayToggle = () => {
-    sound.playClick();
+    sound.play("click");
     setIsPlaying((prev) => !prev);
   };
 
@@ -93,7 +93,7 @@ const Header = () => {
       <nav className="text-black gap-x-3 font-sans font-semibold text-xl tracking-tighter leading-none flex items-center">
         {navLinks.map((link) => (
           <Link
-          onClick={()=>sound.playClick()}
+            onClick={() => sound.playClick()}
             href={link.href}
             key={link.id}
             className={`pointer-events-auto ${pathname === link.href ? "opacity-100" : "opacity-50"
@@ -171,7 +171,7 @@ const Header = () => {
             <div
               key={item.id}
               onClick={() => {
-                sound.playClick();
+                sound.play("click");
 
                 setPrevTrack(activeTrack);
                 setActiveTrack(item);

@@ -1,20 +1,26 @@
 class SoundManager {
   constructor() {
-    this.click = null;
+    this.sounds = {};
   }
 
   init() {
     if (typeof window === "undefined") return;
 
-    this.click = new Audio("/music/click.mp3");
-    this.click.preload = "auto";
+    this.sounds.click = new Audio("/music/click.mp3");
+    this.sounds.fx = new Audio("/music/fx.mp3");
+
+    Object.values(this.sounds).forEach((audio) => {
+      audio.preload = "auto";
+    });
   }
 
-  playClick() {
-    if (!this.click) return;
+  play(name) {
+    const base = this.sounds[name];
+    if (!base) return;
 
-    this.click.currentTime = 0;
-    this.click.play().catch(() => {});
+    const audio = base.cloneNode();
+    audio.volume = base.volume;
+    audio.play().catch(() => { });
   }
 }
 

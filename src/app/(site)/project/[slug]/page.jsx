@@ -29,7 +29,7 @@ export default function ProjectDetail() {
         if (index === activeIndex) return;
         const swiper = swiperRef.current;
         if (!swiper) return;
-        sound.playClick()
+        sound.play("click")
 
         flipState.fromSwiper = true;
         swiper.slideToLoop(index);
@@ -87,8 +87,8 @@ export default function ProjectDetail() {
         } else {
             gsap.to(".box2", {
                 opacity: 0,
-                delay:.5,
-                duration:0.1
+                delay: .5,
+                duration: 0.1
             })
         }
         tl.to([".anim_txt", ".close_btn"], {
@@ -102,7 +102,7 @@ export default function ProjectDetail() {
             ease: "expo.out",
             duration: 0.5
         }, "<")
-        if(flipState.fromSwiper) return
+        if (flipState.fromSwiper) return
         tl.to(".box2", {
             opacity: 0,
             ease: "expo.in",
@@ -186,7 +186,7 @@ export default function ProjectDetail() {
 
             </div>
 
-            <Link onClick={() => sound.playClick()} href={"/"} className={`close_btn ${flipState.fromSwiper ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[2rem]"}  font-sans  text-xl leading-none z-10 fixed top-5 left-[42%] mix-blend-difference`}>
+            <Link onClick={() => sound.play("click")} href={"/"} className={`close_btn ${flipState.fromSwiper ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[2rem]"}  font-sans  text-xl leading-none z-10 fixed top-5 left-[42%] mix-blend-difference`}>
                 <span className="text-white hover:underline">
                     Close
                 </span>

@@ -105,7 +105,7 @@ const Header = () => {
       </nav>
 
       <div
-        className="music_slt relative w-[35vw] flex gap-1.5 flex-col items-end pointer-events-auto"
+        className={`music_slt relative w-[35vw] flex gap-1 flex-col items-end `}
         onMouseLeave={() => setIsPlayerVisible(false)}
       >
         <audio ref={clickAudioRef} src="/music/click.mp3" preload="auto" />
@@ -114,7 +114,7 @@ const Header = () => {
         <div
           onClick={handlePlayToggle}
           onMouseEnter={() => setIsPlayerVisible(true)}
-          className="running_music_preview cursor-pointer w-[42%] border flex gap-2 items-center p-1.5 border-black/10 rounded-sm bg-gray-50"
+          className="running_music_preview pointer-events-auto cursor-pointer w-[42%] border flex gap-2 items-center p-1.5 border-black/10 rounded-sm bg-gray-50"
         >
           <div className="aspect-square w-8 rounded-sm overflow-hidden relative center">
             <div className="absolute z-20 text-white pointer-events-none">

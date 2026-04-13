@@ -10,6 +10,7 @@ import gsap from "gsap";
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
 import { ViewTransitions } from "next-view-transitions";
 import { sound } from "@/utils/sound";
+import Introloader from "@/components/common/Introloader";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -35,6 +36,7 @@ export default function SiteLayout({ children }) {
   return (
     <ViewTransitions>
       <LenisScroll>
+        <Introloader/>
         <header>
           <Header />
         </header>

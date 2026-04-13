@@ -72,23 +72,9 @@ const Hero = () => {
 
     };
 
-    useGSAP(() => {
-        gsap.to(".marquee-card", {
-            opacity: 1,
-            transform: "translateY(0rem)",
-            ease: "expo.out",
-            delay: 0.2,
-            stagger: 0.05
-        })
-    })
-
     return (
         <>
             <div className="w-full h-screen relative flex items-center">
-                <div className=" hero_title absolute top-5 z-10 mix-blend-difference left-1/2 -translate-x-1/2 text-center text-[4.6rem] bold">
-                    <h1 className=' text-white leading-16'>Better Off® <br /> THE LOOKBACK <br />(BO®S/2026)</h1>
-                </div>
-
                 <InfiniteMarquee onUpdate={setMarqueeProgress}>
                     <div className=" marque_paren  w-full h-screen flex items-center select-none">
                         {ProjectsData.map((project) => (

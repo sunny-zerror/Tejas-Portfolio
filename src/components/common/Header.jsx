@@ -117,7 +117,7 @@ const Header = () => {
           className="running_music_preview cursor-pointer w-[42%] border flex gap-2 items-center p-1.5 border-black/10 rounded-sm bg-gray-50"
         >
           <div className="aspect-square w-8 rounded-sm overflow-hidden relative center">
-            <div className="absolute z-20 text-white">
+            <div className="absolute z-20 text-white pointer-events-none">
               {isPlaying ? <RiPauseLine size={18} /> : <RiPlayLine size={18} />}
             </div>
 

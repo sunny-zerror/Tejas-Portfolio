@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import InfiniteMarquee from '../effects/InfiniteMarquee'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
@@ -8,11 +8,27 @@ import { flipState } from "@/utils/flipStore";
 import { useRouter } from 'next/navigation'
 import { ProjectsData } from '@/utils/projectsData'
 import { sound } from '@/utils/sound'
+import TrackBar from '../effects/TrackBar'
 
 gsap.registerPlugin(Flip);
 
-const Hero = () => {
+const bar_data = [
+    { id: 1, label: "January" },
+    { id: 2, label: "February" },
+    { id: 3, label: "March" },
+    { id: 4, label: "April" },
+    { id: 5, label: "May" },
+    { id: 6, label: "June" },
+    { id: 7, label: "July" },
+    { id: 8, label: "August" },
+    { id: 9, label: "September" },
+    { id: 10, label: "October" },
+    { id: 11, label: "November" },
+    { id: 12, label: "December" },
+]
 
+const Hero = () => {
+    const [marqueeProgress, setMarqueeProgress] = useState(0);
     const ticksRef = useRef([]);
     ticksRef.current = [];
 
@@ -57,52 +73,14 @@ const Hero = () => {
     };
 
     useGSAP(() => {
-        gsap.to(".marque_paren", {
+        gsap.to(".marquee-card", {
             opacity: 1,
-            ease: "power2.out",
-            duration: 1,
-            delay: 0.2
+            transform: "translateY(0rem)",
+            ease: "expo.out",
+            delay: 0.2,
+            stagger: 0.05
         })
     })
-
-const activeElRef = useRef(null);
-
-useEffect(() => {
-  const updateCenterTick = () => {
-    const centerX = window.innerWidth / 2;
-    let newActive = null;
-
-    ticksRef.current.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      const elCenter = rect.left + rect.width / 2;
-
-      const isCenter = Math.abs(elCenter - centerX) < 5;
-
-      if (isCenter) {
-        newActive = el;
-        el.classList.add("active_bar");
-      } else {
-        el.classList.remove("active_bar");
-      }
-    });
-
-    if (newActive && activeElRef.current !== newActive) {
-      activeElRef.current = newActive;
-
-      sound.play("fx"); 
-    }
-  };
-
-  let raf;
-  const loop = () => {
-    updateCenterTick();
-    raf = requestAnimationFrame(loop);
-  };
-
-  loop();
-
-  return () => cancelAnimationFrame(raf);
-}, []);
 
     return (
         <>
@@ -111,15 +89,15 @@ useEffect(() => {
                     <h1 className=' text-white leading-16'>Better Off® <br /> THE LOOKBACK <br />(BO®S/2026)</h1>
                 </div>
 
-                <InfiniteMarquee>
-                    <div className=" marque_paren opacity-0 w-full h-screen flex items-center select-none">
+                <InfiniteMarquee onUpdate={setMarqueeProgress}>
+                    <div className=" marque_paren  w-full h-screen flex items-center select-none">
                         {ProjectsData.map((project) => (
                             <div
                                 onClick={(e) => handleClick(project, e)}
                                 data-flip-id={`box-${project.id}`}
                                 key={project.id}
                                 onDragStart={(e) => e.preventDefault()}
-                                className=" marquee-card group cursor-pointer select-none group w-[18.5vw] ml-5 transform-3d perspective-distant   relative">
+                                className=" translate-y-14 opacity-0 marquee-card group cursor-pointer select-none group w-[18.5vw] ml-5 transform-3d perspective-distant   relative">
                                 <div className="w-full inline-block overflow-hidden">
                                     <p className={` proj_id group-hover:translate-y-0 transition-all duration-300 leading-none translate-y-full`}>Project {project.id}</p>
                                 </div>
@@ -143,14 +121,15 @@ useEffect(() => {
                     </div>
                 </InfiniteMarquee>
 
-                <div className="fixed bottom-10 left-0 pointer-events-none w-full">
+                <div className="track_bar_parent fixed bottom-12 left-0 w-full">
+                    <TrackBar progress={marqueeProgress} />
+                </div>
+                <div className="track_bar_parent fixed bottom-5 pointer-events-none left-0 w-full">
                     <InfiniteMarquee>
-                        {[...Array(200)].map((_, i) => (
-                            <div
-                                key={i}
-                                ref={(el) => el && ticksRef.current.push(el)}
-                                className="tick h-3 border-l ml-3 border-black/40 transition-all duration-200 ease-out"
-                            />
+                        {bar_data.map((month, index) => (
+                            <div key={index} className="w-[40vw]">
+                                <p className="month uppercase text-sm pp_mono">{month.label}</p>
+                            </div>
                         ))}
                     </InfiniteMarquee>
                 </div>

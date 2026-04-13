@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 export default function InfiniteMarquee({
     children,
+    onUpdate,
     speed = 60,
     draggable = true,
     className = "",
@@ -11,83 +12,94 @@ export default function InfiniteMarquee({
 }) {
     const containerRef = useRef(null);
     const trackRef = useRef(null);
-    const isTouchRef = useRef(false);
-    const hasIntroPlayed = useRef(false);
 
     const [contentWidth, setContentWidth] = useState(0);
 
     const velocity = useRef(0);
     const position = useRef(0);
+
     const isDragging = useRef(false);
     const lastX = useRef(0);
-    const lastScrollY = useRef(0);
     const dragDistance = useRef(0);
-    const pointerDownTarget = useRef(null);
+
+    const lastScrollY = useRef(0);
+    const isTouchRef = useRef(false);
 
     const rotation = useRef(0);
     const targetRotation = useRef(0);
+
+    const isReady = useRef(false);
+    const rafRef = useRef(null);
 
     useEffect(() => {
         if (!trackRef.current) return;
 
         const el = trackRef.current;
+        let frame;
+
+        const measure = () => {
+            const width = el.scrollWidth / 2;
+
+            setContentWidth((prev) => {
+                if (Math.abs(prev - width) < 1) return prev;
+                return width;
+            });
+        };
+
+        frame = requestAnimationFrame(measure);
 
         const observer = new ResizeObserver(() => {
-            setContentWidth(el.scrollWidth / 2);
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(measure);
         });
 
         observer.observe(el);
 
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+            cancelAnimationFrame(frame);
+        };
     }, []);
 
     useEffect(() => {
-        if (!contentWidth || hasIntroPlayed.current) return;
-
-        hasIntroPlayed.current = true;
-
-        let start = null;
-        const duration = 1500;
-        const distance = -5000;
-        const startPosition = position.current;
-        let raf;
-
-        const animateIntro = (time) => {
-            if (!start) start = time;
-
-            const progress = Math.min((time - start) / duration, 1);
-            const ease = 1 - Math.pow(1 - progress, 3);
-
-            position.current = startPosition + distance * ease;
-
-            if (progress < 1) {
-                raf = requestAnimationFrame(animateIntro);
-            } else {
-                velocity.current = 0;
-            }
-        };
-
-        raf = requestAnimationFrame(animateIntro);
-        return () => cancelAnimationFrame(raf);
+        if (!contentWidth) return;
+        position.current = -contentWidth / 2;
     }, [contentWidth]);
 
     useEffect(() => {
         if (!contentWidth) return;
 
-        let raf;
+        const t = setTimeout(() => {
+            isReady.current = true;
+        }, 50);
+
+        return () => clearTimeout(t);
+    }, [contentWidth]);
+
+    useEffect(() => {
+        if (!contentWidth) return;
+
         let lastTime = performance.now();
 
         const animate = (time) => {
             const delta = (time - lastTime) / 1000;
             lastTime = time;
 
-            position.current += velocity.current;
-            velocity.current *= isTouchRef.current ? 0.92 : 0.95;
+            if (!isReady.current) {
+                rafRef.current = requestAnimationFrame(animate);
+                return;
+            }
 
-            if (Math.abs(velocity.current) < 0.01) {
+            position.current += velocity.current;
+
+            velocity.current *= isTouchRef.current ? 0.92 : 0.90;
+
+            // kill micro jitter
+            if (Math.abs(velocity.current) < 0.05) {
                 velocity.current = 0;
             }
 
+            // infinite loop
             if (position.current <= -contentWidth) {
                 position.current += contentWidth;
             } else if (position.current >= 0) {
@@ -95,25 +107,32 @@ export default function InfiniteMarquee({
             }
 
             if (trackRef.current) {
-                trackRef.current.style.transform = `translateX(${position.current}px)`;
+                trackRef.current.style.transform = `translate3d(${position.current}px,0,0)`;
 
+                // rotation effect
                 targetRotation.current = Math.max(
                     Math.min(velocity.current * 0.6, 50),
                     -50
                 );
-                rotation.current += (targetRotation.current - rotation.current) * Math.min(delta * 10, 1);
 
-                const cards = trackRef.current.querySelectorAll(".img_card");
+                rotation.current +=
+                    (targetRotation.current - rotation.current) *
+                    Math.min(delta * 10, 1);
+
+                const cards =
+                    trackRef.current.querySelectorAll(".img_card");
+
                 cards.forEach((card) => {
                     card.style.transform = `rotateY(${rotation.current}deg)`;
                 });
             }
 
-            raf = requestAnimationFrame(animate);
+            rafRef.current = requestAnimationFrame(animate);
         };
 
-        raf = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(raf);
+        rafRef.current = requestAnimationFrame(animate);
+
+        return () => cancelAnimationFrame(rafRef.current);
     }, [contentWidth]);
 
     useEffect(() => {
@@ -128,18 +147,20 @@ export default function InfiniteMarquee({
         };
 
         const onScroll = () => {
-            const currentScrollY = window.scrollY;
-            const delta = currentScrollY - lastScrollY.current;
+            const current = window.scrollY;
+            const delta = current - lastScrollY.current;
 
             applyScrollDelta(delta);
-            lastScrollY.current = currentScrollY;
+            lastScrollY.current = current;
         };
 
         const onWheel = (e) => {
-            const primaryDelta =
-                Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+            const primary =
+                Math.abs(e.deltaY) >= Math.abs(e.deltaX)
+                    ? e.deltaY
+                    : e.deltaX;
 
-            applyScrollDelta(primaryDelta);
+            applyScrollDelta(primary);
         };
 
         window.addEventListener("scroll", onScroll, { passive: true });
@@ -151,70 +172,70 @@ export default function InfiniteMarquee({
         };
     }, [speed]);
 
-    useEffect(() => {
-        if (!draggable || !containerRef.current) return;
+useEffect(() => {
+    if (!draggable || !containerRef.current) return;
 
-        const el = containerRef.current;
+    const el = containerRef.current;
 
-        const onPointerDown = (e) => {
-            if (e.pointerType === "mouse" && e.button !== 0) return;
+    let pointerDownTarget = null;
 
-            isDragging.current = true;
-            lastX.current = e.clientX;
-            dragDistance.current = 0;
-            pointerDownTarget.current = e.target;
-            isTouchRef.current = e.pointerType === "touch";
+    const onPointerDown = (e) => {
+        if (e.pointerType === "mouse" && e.button !== 0) return;
 
-            el.setPointerCapture(e.pointerId);
-        };
+        isDragging.current = true;
+        lastX.current = e.clientX;
+        dragDistance.current = 0;
+        isTouchRef.current = e.pointerType === "touch";
 
-        const onPointerMove = (e) => {
-            if (!isDragging.current) return;
+        pointerDownTarget = e.target;
 
-            const delta = e.clientX - lastX.current;
-            dragDistance.current += Math.abs(delta);
+        el.setPointerCapture(e.pointerId);
+    };
 
-            const multiplier = isTouchRef.current ? 3 : 1;
-            velocity.current = delta * multiplier;
+    const onPointerMove = (e) => {
+        if (!isDragging.current) return;
 
-            lastX.current = e.clientX;
-        };
+        const delta = e.clientX - lastX.current;
+        dragDistance.current += Math.abs(delta);
 
-        const stopDrag = (e) => {
-            const shouldTriggerClick = dragDistance.current < 6;
+        velocity.current = delta * (isTouchRef.current ? 3 : 1);
+        lastX.current = e.clientX;
+    };
 
-            isDragging.current = false;
-            dragDistance.current = 0;
+    const onPointerUp = (e) => {
+        const isClick = dragDistance.current < 6;
 
-            try {
-                el.releasePointerCapture(e.pointerId);
-            } catch { }
+        isDragging.current = false;
 
-            if (
-                shouldTriggerClick &&
-                pointerDownTarget.current instanceof HTMLElement &&
-                pointerDownTarget.current !== el
-            ) {
-                pointerDownTarget.current.click();
-            }
+        try {
+            el.releasePointerCapture(e.pointerId);
+        } catch {}
 
-            pointerDownTarget.current = null;
-        };
+        // 🔥 restore click
+        if (
+            isClick &&
+            pointerDownTarget &&
+            pointerDownTarget instanceof HTMLElement &&
+            pointerDownTarget !== el
+        ) {
+            pointerDownTarget.click();
+        }
 
-        window.addEventListener("pointerdown", onPointerDown);
-        window.addEventListener("pointermove", onPointerMove);
-        window.addEventListener("pointerup", stopDrag);
-        window.addEventListener("pointercancel", stopDrag);
-        window.addEventListener("pointerleave", stopDrag);
+        pointerDownTarget = null;
+    };
 
-        return () => {
-            window.removeEventListener("pointerdown", onPointerDown);
-            window.removeEventListener("pointermove", onPointerMove);
-            window.removeEventListener("pointerup", stopDrag);
-            window.removeEventListener("pointercancel", stopDrag);
-            window.removeEventListener("pointerleave", stopDrag);
-        };
-    }, [draggable]);
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+
+    return () => {
+        window.removeEventListener("pointerdown", onPointerDown);
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("pointerup", onPointerUp);
+        window.removeEventListener("pointercancel", onPointerUp);
+    };
+}, [draggable]);
 
     useEffect(() => {
         if (!containerRef.current) return;
@@ -234,6 +255,17 @@ export default function InfiniteMarquee({
         };
     }, []);
 
+    useEffect(() => {
+    if (!trackRef.current) return;
+
+    const interval = setInterval(() => {
+        if (onUpdate) {
+            onUpdate(-position.current);
+        }
+    }, 16);
+
+    return () => clearInterval(interval);
+}, []);
     return (
         <div
             ref={containerRef}
@@ -245,12 +277,11 @@ export default function InfiniteMarquee({
         >
             <div
                 ref={trackRef}
-                className="inline-flex items-end select-none will-change-transform"
+                className="inline-flex items-end will-change-transform"
             >
                 {children}
                 {children}
             </div>
-
         </div>
     );
 }

@@ -1,9 +1,11 @@
 "use client";
 import { RiArrowRightLine } from '@remixicon/react'
-import React, { useEffect, useState } from 'react'
-import useScrambleText from '../effects/useScrambleText';
+import React, { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap';
 import { sound } from '@/utils/sound';
+import { useScrambleText } from '../effects/useScrambleText';
+import { useGSAP } from '@gsap/react';
+import { useAppStore } from '../store/useAppStore';
 
 const monthsData = [
     {
@@ -122,9 +124,16 @@ const monthsData = [
 ];
 
 const Introloader = () => {
-    const [open, setOpen] = useState(true);
-    useScrambleText(open);
-    const [introLoaded, setIntroLoaded] = useState(false);
+    const setIntroLoaded = useAppStore((state) => state.setIntroLoaded);
+    const hasIntroLoaded = useAppStore((state) => state.hasIntroLoaded);
+    const ref = useRef(null);
+    const [mode, setMode] = useState("forward");
+
+    useScrambleText({
+        ref,
+        mode,
+    });
+
     const [loaded, setLoaded] = useState(false);
     const leftColumn = monthsData.slice(0, 7);
     const rightColumn = monthsData.slice(7);
@@ -137,86 +146,105 @@ const Introloader = () => {
         return () => clearTimeout(timer);
     }, []);
 
+    useGSAP(() => {
+        const tl = gsap.timeline({ delay: 1.75 })
+        tl.to(".click_btn", {
+            opacity: 1,
+            stagger: 0.1
+        })
+    })
+
     useEffect(() => {
-        if (introLoaded) {
-            const tl = gsap.timeline({ delay: 0.8 });
-            tl.to(".click_btn", {
+        if (hasIntroLoaded) {
+            console.log("object");
+            const completeTl = gsap.timeline();
+            completeTl.to([".load_txt", ".click_btn"], {
                 opacity: 0,
-                pointerEvents: "none",
+                stagger: 0.1,
+                ease: "expo.out"
             })
-            tl.to(".hero_title", {
-                top: "1rem",
-                ease: "expo.out",
-                duration: 1,
-            });
-            tl.to(".loader_paren", {
-                zIndex: -1,
-                duration: 0.1
-            });
-            tl.to(".marquee-card", {
-                opacity: 1,
-                transform: "translateY(0rem)",
-                ease: "expo.out",
-                duration: 1,
-                stagger: 0.05
-            })
-
         }
-    }, [introLoaded]);
-
+    }, [hasIntroLoaded])
 
 
 
     return (
         <>
-            <div className=" loader_paren w-full h-screen fixed z-100 center pt-[16%] pointer-events-none bg-white  ">
-                <div className=" hero_title absolute top-[35%] z-10 mix-blend-difference left-1/2 -translate-x-1/2 text-center text-[4.6rem] bold">
-                    <h1 className=' text-white leading-16'>Better Off® <br /> THE LOOKBACK <br />(BO®S/2026)</h1>
-                </div>
-                <button onClick={() => { sound.play("click"), setIntroLoaded(true), setOpen(false) }} className=' click_btn pointer-events-auto flex group items-center gap-x-2 leading-none text-xl border hover:bg-gray-100 transition-colors duration-300 border-black/10 rounded-sm py-2.5 px-4'>Enter with sound
-                    <div className="flex w-4  aspect-square overflow-hidden">
-                        <RiArrowRightLine size={15} className='shrink-0 -translate-x-full group-hover:translate-x-0 transition-all duration-300' />
-                        <RiArrowRightLine size={15} className='shrink-0 -translate-x-full group-hover:translate-x-0 transition-all duration-300' />
-                    </div>
-                </button>
+            <div className="noise fixed inset-0 pointer-events-none will-change-transform z-[9999]"></div>
+            {!hasIntroLoaded && (
+                <div className=" loader_paren w-full mix-blend-difference text-white h-screen fixed z-100 center pt-[22%] pointer-events-none   ">
+                    <p className=" load_txt  absolute text-[1.35rem] pp_mono   top-5 left-5 uppercase">
+                        <span
+                            className={`transition-opacity duration-500  ${loaded ? "opacity-0" : "opacity-100"
+                                }`}
+                        >
+                            Loading...
+                        </span>
 
-                <p className=" load_txt absolute text-sm pp_mono font-semibold top-5 left-5 uppercase">
-                    <span
-                        className={`transition-opacity js-text duration-500  ${loaded ? "opacity-0" : "opacity-100"
-                            }`}
-                    >
-                        Loading...
-                    </span>
+                        <span
+                            className={`absolute left-0  transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"
+                                }`}
+                        >
+                            Loaded
+                        </span>
+                    </p>
 
-                    <span
-                        className={`absolute left-0 -top-4 js-text transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"
-                            }`}
-                    >
-                        Loaded
-                    </span>
-                </p>
-                <div className=" leading-tight text-sm font-semibold pp_mono absolute top-6 right-0">
-                    <div className="grid grid-cols-2 ">
-                        {[leftColumn, rightColumn].map((column, colIndex) => (
-                            <div key={colIndex}>
-                                {column.map((monthData, index) => (
-                                    <div key={index} className=" w-[17vw]  mb-1">
-                                        <div className="js-text relative block will-change-transform  uppercase">{monthData.month}</div>
-
-                                        <div className="pl-5 js-text relative block will-change-transform  ">
-                                            {monthData.items.map((item, i) => (
-                                                <div key={i}>
-                                                    {item.title} ({item.count})
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
+                    <div className=" text-center space-y-5">
+                        <button onClick={() => { sound.play("click"), setIntroLoaded(true), setMode("reverse") }} className=' click_btn opacity-0 pointer-events-auto flex group items-center gap-x-2 leading-none text-3xl  border hover:bg-white/5 transition-colors duration-300 border-white/10 rounded-sm py-4 px-6'>
+                            <p className=' tracking-wide'>
+                                Enter with sound
+                            </p>
+                            <div className="flex w-6  aspect-square overflow-hidden">
+                                <RiArrowRightLine size={15} className='shrink-0 -translate-x-full group-hover:translate-x-0 transition-all duration-300' />
+                                <RiArrowRightLine size={15} className='shrink-0 -translate-x-full group-hover:translate-x-0 transition-all duration-300' />
                             </div>
-                        ))}
+                        </button>
+                        <button className=' click_btn group relative opacity-0 mix-blend-difference text-xl pointer-events-auto  text-[#ffffff4d] '>
+                            ...or without
+                            <span className='absolute bottom-[1px] h-[1px] bg-[#ffffff4d] w-0 left-0 group-hover:w-full transition-all duration-300 ease-out rounded-full'></span>
+                        </button>
+
                     </div>
+
+
+
+                    <div
+                        ref={ref}
+                        className="leading-tight text-[1.35rem]  pp_mono absolute top-6 right-0"
+                    >
+                        <div className="grid grid-cols-2">
+
+                            {[leftColumn, rightColumn].map((column, colIndex) => (
+                                <div key={colIndex} className="js-col">
+
+                                    {column.map((monthData, index) => (
+                                        <div key={index} className=" mix-blend-difference  js-block w-[17vw] mb-1">
+
+                                            {/* month */}
+                                            <div className="js-text uppercase">
+                                                {monthData.month}
+                                            </div>
+
+                                            {/* items */}
+                                            <div className="pl-5">
+                                                {monthData.items.map((item, i) => (
+                                                    <div key={i} className="js-text whitespace-nowrap">
+                                                        {item.title} ({item.count})
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                        </div>
+                                    ))}
+
+                                </div>
+                            ))}
+
+                        </div>
+                    </div>
+
                 </div>
-            </div>
+            )}
         </>
     )
 }

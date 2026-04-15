@@ -1,158 +1,317 @@
 "use client";
+
+import React, { forwardRef, useImperativeHandle, useRef, useEffect } from "react";
+import gsap from "gsap";
 import { sound } from "@/utils/sound";
-import { useEffect, useRef } from "react";
 
-const TrackBar = ({ progress = 0 }) => {
+// Utility lerp (linear interpolation)
+const lerp = (start, end, amt) => (1 - amt) * start + amt * end;
+
+const SticksCanvas = forwardRef(({
+    lw = 1,
+    gap = 10,
+    mh = 15, // min height
+    mjh = 22, // min height for 'special' items
+    alpha = 0.25,
+    by = null, // y position from bottom
+    hover = true,
+    near = 10,
+    boost = 18,
+    fall = 0.55,
+    ease = 0.1
+}, ref) => {
     const canvasRef = useRef(null);
-    const wrapperRef = useRef(null);
+    const isDragging = useRef(false);
+    const playFx = () => {
+        sound.play("fx");
+    };
+    const dragOffsetX = useRef(0);
+    // Local state mirrored from original vue version
+    const state = useRef({
+        playedIndex: null,
+        ctx: null,
+        dpr: 1,
+        vw: 0,
+        vh: 0,
+        scrollOffset: 0,
+        itemWidth: lw + gap,
+        prevHeights: new Float32Array(0),
+        specialIndices: new Uint8Array(0),
+        maxIndexCount: 0,
+        mouseHover: false,
+        mouseX: -1,
+        heights: new Float32Array(0),
+        allocatedLength: 0,
+        lastIndex: null,
+    });
 
-    const bars = useRef([]);
-    const width = useRef(0);
-    const height = useRef(0);
-    const lastCenterIndex = useRef(null);
-    const mouseX = useRef(-1);
-    const isHover = useRef(false);
 
-    const lastProgress = useRef(0);
-    const velocity = useRef(0);
+    const allocateHeights = (size) => {
+        if (size <= state.current.allocatedLength) return;
 
-    const gap = 12;
-    const baseHeight = 10;
-    const maxCenterBoost = 40;
-    const hoverBoost = 18;
-    const near = 100;
+        state.current.allocatedLength = size;
+        state.current.heights = new Float32Array(size);
+        state.current.prevHeights = new Float32Array(size); // 👈 add this
+    };
 
-    const lerp = (a, b, t) => a + (b - a) * t;
+    const shiftHeights = (newIndex) => {
+        let { lastIndex, heights, allocatedLength } = state.current;
+        if (lastIndex == null) {
+            state.current.lastIndex = newIndex;
+        } else if (newIndex !== lastIndex) {
+            const diff = newIndex - lastIndex;
+            if (Math.abs(diff) >= allocatedLength) {
+                heights.fill(0, 0, allocatedLength);
+            } else if (diff > 0) {
+                heights.copyWithin(0, diff, allocatedLength);
+                heights.fill(0, allocatedLength - diff, allocatedLength);
+            } else {
+                const absDiff = -diff;
+                heights.copyWithin(absDiff, 0, allocatedLength + diff);
+                heights.fill(0, 0, absDiff);
+            }
+            state.current.lastIndex = newIndex;
+        }
+    };
+
+    const fallEase = (ratio) => {
+        const power = 1 / Math.max(0.001, fall);
+        const v = 1 - ratio;
+        return v <= 0 ? 0 : Math.pow(v, power);
+    };
+
+    const drawLine = (x, h, y, opacity) => {
+        const { ctx } = state.current;
+        if (!ctx) return;
+        ctx.globalAlpha = opacity;
+        const px = Math.round(x) + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(px, y);
+        ctx.lineTo(px, y - h);
+        ctx.stroke();
+    };
+
+    const tick = ({ ratio = 1 } = {}) => {
+        const s = state.current;
+        if (!s.ctx || s.vw <= 0 || s.vh <= 0) return;
+
+        s.ctx.clearRect(0, 0, s.vw, s.vh);
+
+        let offsetMod = s.scrollOffset % s.itemWidth;
+        if (offsetMod < 0) offsetMod += s.itemWidth;
+
+        const startIndex = Math.floor((s.scrollOffset - offsetMod) / s.itemWidth);
+        const baseY = by == null ? s.vh - 1 : by;
+        const halfVw = s.vw * 0.5;
+        const nearPx = near * s.itemWidth;
+        const isHovering = hover && (s.mouseHover || isDragging.current) && s.mouseX >= 0;
+
+        const requiredLength = Math.ceil(s.vw / s.itemWidth) + 4;
+        if (requiredLength !== s.allocatedLength) {
+            allocateHeights(requiredLength);
+        }
+        shiftHeights(startIndex);
+
+        const smoothEase = ease * ratio;
+        const immediateEase = 0.2 * ratio;
+        const centerIndex = Math.round((s.scrollOffset + halfVw) / s.itemWidth);
+
+        for (let x = -offsetMod, i = 0; x <= s.vw + s.itemWidth; x += s.itemWidth, i++) {
+            const itemIndex = startIndex + i;
+            let isSpecial = false;
+
+            if (s.maxIndexCount > 0) {
+                let wrappedIndex = itemIndex % s.maxIndexCount;
+                if (wrappedIndex < 0) wrappedIndex += s.maxIndexCount;
+                isSpecial = s.specialIndices[wrappedIndex] === 1;
+            }
+
+            const baseH = isSpecial ? mjh : mh;
+            let targetH = 0;
+
+            if (itemIndex === centerIndex) {
+                targetH += 50 - baseH;
+            } else if (isHovering) {
+                const dist = Math.abs(x - s.mouseX);
+                if (dist < nearPx) {
+                    targetH = boost * fallEase(dist / nearPx);
+                }
+            }
+
+            s.heights[i] = lerp(s.heights[i], targetH, itemIndex === centerIndex ? immediateEase : smoothEase);
+            const finalH = baseH + s.heights[i];
+
+            let finalAlpha = alpha;
+            if (itemIndex === centerIndex) {
+                const progress = Math.max(0, Math.min(1, (finalH - baseH) / Math.max(1, 50 - baseH)));
+                finalAlpha = alpha + progress * (1 - alpha);
+            }
+            if (itemIndex === centerIndex) {
+                const isMax = Math.abs(finalH - (baseH + (50 - baseH))) < 30;
+
+                if (isMax && s.playedIndex !== itemIndex) {
+                    playFx();
+                    s.playedIndex = itemIndex;
+                }
+            }
+
+            drawLine(x, finalH, baseY, finalAlpha);
+        }
+    };
+
+    const resize = () => {
+        if (!canvasRef.current) return;
+        const c = canvasRef.current;
+
+        // Parent container width/height
+        const pw = c.parentElement.clientWidth;
+        const ph = c.parentElement.clientHeight;
+
+        state.current.vw = pw;
+        state.current.vh = ph;
+        state.current.dpr = Math.min(2, window.devicePixelRatio || 1);
+
+        c.width = Math.floor(pw * state.current.dpr);
+        c.height = Math.floor(ph * state.current.dpr);
+
+        const ctx = c.getContext("2d");
+        state.current.ctx = ctx;
+        ctx.setTransform(state.current.dpr, 0, 0, state.current.dpr, 0, 0);
+        ctx.strokeStyle = "#000"; // Replaced hardcoded black with white for visibility in dark mode!
+        ctx.lineWidth = lw;
+
+        state.current.itemWidth = lw + gap;
+        state.current.allocatedLength = 0;
+
+        tick();
+    };
+
+    useImperativeHandle(ref, () => ({
+        resize,
+        tick,
+        setScrollOffset: (offset) => { state.current.scrollOffset = offset; },
+        setSpecialIndices: (arr) => {
+            if (!arr || !arr.length) {
+                state.current.specialIndices = new Uint8Array(0);
+                state.current.maxIndexCount = 0;
+                return;
+            }
+            if (arr instanceof Uint8Array) {
+                state.current.specialIndices = arr;
+            } else {
+                const newArr = new Uint8Array(arr.length);
+                for (let i = 0; i < arr.length; i++) {
+                    newArr[i] = arr[i] ? 1 : 0;
+                }
+                state.current.specialIndices = newArr;
+            }
+            state.current.maxIndexCount = state.current.specialIndices.length;
+        }
+    }));
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        const wrapper = wrapperRef.current;
-        if (!canvas || !wrapper) return;
-
-        const ctx = canvas.getContext("2d");
-
-        const resize = () => {
-            width.current = wrapper.clientWidth;
-            height.current = wrapper.clientHeight;
-
-            canvas.width = width.current * devicePixelRatio;
-            canvas.height = height.current * devicePixelRatio;
-
-            canvas.style.width = width.current + "px";
-            canvas.style.height = height.current + "px";
-
-            ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-
-            bars.current = new Float32Array(
-                Math.ceil(width.current / gap) + 10
-            );
-        };
-
         resize();
         window.addEventListener("resize", resize);
+        return () => window.removeEventListener("resize", resize);
+    }, [lw, gap]);
 
-        const onEnter = () => (isHover.current = true);
-        const onLeave = () => {
-            isHover.current = false;
-            mouseX.current = -1;
-        };
-        const onMove = (e) => {
-            const rect = wrapper.getBoundingClientRect();
-            mouseX.current = e.clientX - rect.left;
-        };
-
-        wrapper.addEventListener("mouseenter", onEnter);
-        wrapper.addEventListener("mouseleave", onLeave);
-        wrapper.addEventListener("mousemove", onMove);
-
+    useEffect(() => {
         let raf;
 
-        const draw = () => {
-            ctx.clearRect(0, 0, width.current, height.current);
-
-            velocity.current = progress - lastProgress.current;
-            lastProgress.current = progress;
-
-            const isMoving = Math.abs(velocity.current) > 0.01;
-
-            const centerX = width.current / 2;
-            const offset = progress % gap;
-
-            const baseIndex = Math.floor(progress / gap);
-            const centerFloat = (progress + centerX) / gap;
-            const centerIndex = Math.round(centerFloat);
-
-            if (lastCenterIndex.current !== null && centerIndex !== lastCenterIndex.current) {
-                sound.play("fx");
-            }
-
-            lastCenterIndex.current = centerIndex;
-
-            for (let i = 0; i < bars.current.length; i++) {
-                const x = i * gap - offset;
-                const index = baseIndex + i;
-
-                let target = 0;
-
-                if (isMoving) {
-                    const dist = Math.abs(index - centerFloat);
-
-                    if (dist < 2) {
-                        const t = 1 - dist / 2;
-
-                        const curveBoost = maxCenterBoost * 8;
-
-                        target = curveBoost * Math.pow(t, 2.2);
-                    }
-                } else {
-                    if (index === centerIndex) {
-                        target = maxCenterBoost;
-                    }
-                }
-
-                if (isHover.current && mouseX.current >= 0) {
-                    const d = Math.abs(x - mouseX.current);
-                    if (d < near) {
-                        const t = 1 - d / near;
-                        target += hoverBoost * Math.pow(t, 1.6);
-                    }
-                }
-
-                bars.current[i] = lerp(bars.current[i], target, 0.12);
-
-                const h = baseHeight + bars.current[i];
-
-                ctx.beginPath();
-                ctx.moveTo(x + 0.5, height.current);
-                ctx.lineTo(x + 0.5, height.current - h);
-
-                ctx.strokeStyle = "#000";
-
-                ctx.globalAlpha = 0.2 + Math.min(1, bars.current[i] / maxCenterBoost) * 0.75;
-
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            }
-
-            raf = requestAnimationFrame(draw);
+        const loop = () => {
+            tick();
+            raf = requestAnimationFrame(loop);
         };
 
-        draw();
+        raf = requestAnimationFrame(loop);
 
-        return () => {
-            cancelAnimationFrame(raf);
-            window.removeEventListener("resize", resize);
-            wrapper.removeEventListener("mouseenter", onEnter);
-            wrapper.removeEventListener("mouseleave", onLeave);
-            wrapper.removeEventListener("mousemove", onMove);
-        };
-    }, [progress]);
+        return () => cancelAnimationFrame(raf);
+    }, []);
 
+    useEffect(() => {
+    const handlePointerUp = () => {
+        isDragging.current = false;
+
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+    };
+
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+
+    return () => {
+        window.removeEventListener("pointerup", handlePointerUp);
+        window.removeEventListener("pointercancel", handlePointerUp);
+    };
+}, []);
+
+useEffect(() => {
+    const handlePointerMove = (e) => {
+        if (!isDragging.current) return;
+
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        state.current.mouseX = e.clientX - rect.left;
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+
+    return () => {
+        window.removeEventListener("pointermove", handlePointerMove);
+    };
+}, []);
     return (
-        <div ref={wrapperRef} className="w-full h-[80px] relative">
-            <canvas ref={canvasRef} className="absolute inset-0" />
+        <div
+            className="relative h-14  w-full"
+            style={{ cursor: "grab" }}
+           onPointerDown={(e) => {
+    isDragging.current = true;
+
+    state.current.mouseHover = true;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    state.current.mouseX = e.clientX - rect.left;
+
+    document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+
+    e.currentTarget.setPointerCapture(e.pointerId);
+}}
+
+onPointerMove={(e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    state.current.mouseX = e.clientX - rect.left;
+}}
+
+onPointerCancel={() => {
+    isDragging.current = false;
+
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+}}
+
+onPointerLeave={() => {
+    if (!isDragging.current) {
+        document.body.style.cursor = "";
+    }
+}}
+         
+
+
+            onMouseEnter={() => state.current.mouseHover = true}
+            onMouseLeave={() => {
+                if (!isDragging.current) {
+                    state.current.mouseHover = false;
+                    state.current.mouseX = -1;
+                }
+            }}
+        >
+            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
         </div>
     );
-};
+});
 
-export default TrackBar;
+SticksCanvas.displayName = "SticksCanvas";
+
+export default SticksCanvas;

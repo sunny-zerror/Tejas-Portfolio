@@ -13,18 +13,31 @@
 
 html,
 body {
-  font-size: 14px;
+  font-size: clamp(1px, 20px, 10 * 100vw / 1500);
   font-family: pp_medium, Arial, Helvetica, sans-serif;
 }
-.bold{
+.bold {
   font-family: pp_bold, Arial, Helvetica, sans-serif;
 }
-.pp_mono{
+.pp_mono {
   font-family: pp_mono, Arial, Helvetica, sans-serif;
 }
-@media (min-width: 750px) {
-  html,
-  body {
-    font-size: 1vw;
+
+.hero_title h1 {
+  font-size: 11.7em;
+  line-height: 0.85;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+
+@media (min-width: 650px) {
+  .hero_title h1 {
+    font-size: calc(11.7 * 0.9rem);
+  }
+}
+
+@media (min-aspect-ratio: 19 / 10) {
+  .hero_title h1 {
+    font-size: calc(11.7 * 0.6rem);
   }
 }

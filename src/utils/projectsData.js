@@ -9,7 +9,7 @@ export const ProjectsData = [
         id: 2,
         title: "Showcase B",
         slug: "showcase-b",
-        vid: "/images/projects/proj_2.mp4",
+        vid: "/images/projects/proj_2.avif",
     },
     {
         id: 3,

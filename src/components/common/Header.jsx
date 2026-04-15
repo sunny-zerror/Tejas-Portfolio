@@ -8,6 +8,7 @@ import { Link } from 'next-view-transitions';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react'
 import Marquee from 'react-fast-marquee';
+import { useAppStore } from '../store/useAppStore';
 
 const navLinks = [
   { id: 1, label: 'Home', href: "/" },
@@ -16,6 +17,7 @@ const navLinks = [
 ];
 
 const Header = () => {
+  const hasIntroLoaded  = useAppStore((state) => state.hasIntroLoaded);
   const pathname = usePathname();
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTrack, setActiveTrack] = useState(musicData[0]);
@@ -88,9 +90,9 @@ const Header = () => {
   };
 
   return (
-    <div className="fixed pointer-events-none w-full top-0 left-0 flex items-start justify-between padding py-5! z-20">
+    <div className={`fixed ${!hasIntroLoaded ? "opacity-0" : "opacity-100 delay-1000"} transition-all duration-300 ease-out pointer-events-none w-full top-0 left-0 flex items-start justify-between padding py-5! z-20`}>
 
-      <nav className="text-black gap-x-3 font-sans font-semibold text-xl tracking-tighter leading-none flex items-center">
+      <nav className="text-black gap-x-4 font-sans font-semibold text-[2rem] tracking-tighter leading-none flex items-center">
         {navLinks.map((link) => (
           <Link
             onClick={() => sound.playClick()}
@@ -114,14 +116,14 @@ const Header = () => {
         <div
           onClick={handlePlayToggle}
           onMouseEnter={() => setIsPlayerVisible(true)}
-          className="running_music_preview pointer-events-auto cursor-pointer w-[42%] border flex gap-2 items-center p-1.5 border-black/10 rounded-sm bg-gray-50"
+          className={`running_music_preview ${!hasIntroLoaded ? "pointer-events-none" : "pointer-events-auto"} transition-all duration-300 cursor-pointer w-[42%] border flex gap-2 items-center p-1.5 border-black/10 rounded-sm bg-gray-50`}
         >
-          <div className="aspect-square w-8 rounded-sm overflow-hidden relative center">
+          <div className="aspect-square w-12 rounded-sm overflow-hidden relative center">
             <div className="absolute z-20 text-white pointer-events-none">
               {isPlaying ? <RiPauseLine size={18} /> : <RiPlayLine size={18} />}
             </div>
 
-            <div className="relative w-full h-full overflow-hidden">
+            <div className="relative w-full h-full  overflow-hidden">
 
               {/* OLD */}
               {prevTrack && (
@@ -140,7 +142,7 @@ const Header = () => {
             </div>
           </div>
 
-          <div className="relative flex-1 overflow-hidden h-8 text-xl">
+          <div className="relative flex-1 overflow-hidden h-8 text-3xl">
 
             {prevTrack && (
               <div className="absolute h-full flex items-center inset-0 old_text">
@@ -178,7 +180,7 @@ const Header = () => {
 
                 if (!isPlaying) setIsPlaying(true);
               }}
-              className={`w-full text-xl group h-15 cursor-pointer p-1.5 border-b border-black/10 last:border-none flex items-center gap-x-4 pr-4 transition-colors ${activeTrack.id === item.id
+              className={`w-full text-xl group h-20 cursor-pointer p-1.5 border-b border-black/10 last:border-none flex items-center gap-x-4 pr-4 transition-colors ${activeTrack.id === item.id
                 ? "bg-gray-200"
                 : "hover:bg-gray-100"
                 }`}
@@ -206,7 +208,7 @@ const Header = () => {
                 <img src={item.poster} className="cover" alt={item.title} />
               </div>
 
-              <div className="w-full flex justify-between">
+              <div className="w-full flex justify-between text-3xl">
                 <p>{item.title}</p>
                 <p>{item.singer}</p>
               </div>

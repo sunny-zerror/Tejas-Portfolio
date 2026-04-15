@@ -137,13 +137,13 @@ export default function ProjectDetail() {
                     className={`mySwiper  relative pointer-events-auto ${flipState.fromSwiper ? "opacity-100" : "opacity-0"}  `}
                 >
                     {ProjectsData.map((proj, i) => (
-                        <SwiperSlide key={i} className="transition-opacity duration-500 ease-in-out w-[18.5vw]!">
+                        <SwiperSlide key={i} className="transition-opacity duration-500 ease-in-out w-[28.1rem]!">
                             <div
                                 onClick={() => handleSlideClick(i, proj)}
                                 className={`  w-full  relative overflow-hidden cursor-pointer`}
                             >
                                 <div className="w-full inline-block overflow-hidden">
-                                    <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none translate-y-full`}>Project {project.id}</p>
+                                    <p className={` text-2xl group-hover:translate-y-0 transition-all duration-300 leading-none translate-y-full`}>Project {project.id}</p>
                                 </div>
                                 <div className="img_card w-full">
                                     {proj.img ? (
@@ -157,16 +157,16 @@ export default function ProjectDetail() {
                                     )}
                                 </div>
                                 <div className="w-full mt-2 inline-block overflow-hidden">
-                                    <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none -translate-y-full`}>{project.title}</p>
+                                    <p className={` text-2xl group-hover:translate-y-0 transition-all duration-300 leading-none -translate-y-full`}>{project.title}</p>
                                 </div>
                             </div>
                         </SwiperSlide>
                     ))}
                 </Swiper>
 
-                <div data-flip-id={`box-${project.id}`} className={`absolute z-10 box2 ${flipState.fromSwiper ? "opacity-100" : "opacity-0"}   w-[18.5vw] pointer-events-none `}>
+                <div data-flip-id={`box-${project.id}`} className={`absolute z-10 box2 ${flipState.fromSwiper ? "opacity-100" : "opacity-0"}   w-[28.1rem] pointer-events-none `}>
                     <div className="w-full inline-block overflow-hidden">
-                        <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none translate-y-full`}>Project {project.id}</p>
+                        <p className={` text-2xl group-hover:translate-y-0 transition-all duration-300 leading-none translate-y-full`}>Project {project.id}</p>
                     </div>
                     <div className="img_card w-full">
                         {project.img ? (
@@ -180,13 +180,13 @@ export default function ProjectDetail() {
                         )}
                     </div>
                     <div className="w-full mt-2 inline-block overflow-hidden">
-                        <p className={` group-hover:translate-y-0 transition-all duration-300 leading-none -translate-y-full`}>{project.title}</p>
+                        <p className={` text-2xl group-hover:translate-y-0 transition-all duration-300 leading-none -translate-y-full`}>{project.title}</p>
                     </div>
                 </div>
 
             </div>
 
-            <Link onClick={() => sound.play("click")} href={"/"} className={`close_btn ${flipState.fromSwiper ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[2rem]"}  font-sans  text-xl leading-none z-10 fixed top-5 left-[42%] mix-blend-difference`}>
+            <Link onClick={() => sound.play("click")} href={"/"} className={`close_btn ${flipState.fromSwiper ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[2rem]"}    text-[2rem] leading-none z-10 fixed top-5 left-[42%] mix-blend-difference`}>
                 <span className="text-white hover:underline">
                     Close
                 </span>
@@ -198,18 +198,18 @@ export default function ProjectDetail() {
                 <div className="w-[40%] pointer-events-none"></div>
                 <div className="about_page_right p-5 relative w-[60%]">
                     <div className="space-y-14">
-                        <div className="space-y-5 px-32 pt-20 ">
-                            <h3 className=" anim_txt opacity-0 translate-y-[2rem] pp_mono">(APRIL)</h3>
-                            <h1 className=" anim_txt opacity-0 translate-y-[2rem]  text-6xl uppercase bold">A$AP X Rayban</h1>
-                            <p className="text-xl anim_txt opacity-0 translate-y-[2rem]  ">The collaboration between A$AP Rocky and Ray-Ban represents a bold strategic move for one of the most iconic brands in global eyewear. In a category often driven by heritage and nostalgia, Ray-Ban chose to look forward by appointing A$AP Rocky as its first-ever Creative Director, pushing traditional celebrity endorsements toward deeper cultural co-creation.</p>
+                        <div className="space-y-5 px-32 pt-44 ">
+                            <h3 className=" anim_txt opacity-0 text-3xl translate-y-[2rem] pp_mono">(APRIL)</h3>
+                            <h1 className=" anim_txt opacity-0 translate-y-[2rem]  text-8xl uppercase bold">A$AP X Rayban</h1>
+                            <p className=" anim_txt text-[2rem]  leading-tight opacity-0 translate-y-[2rem]  ">The collaboration between A$AP Rocky and Ray-Ban represents a bold strategic move for one of the most iconic brands in global eyewear. In a category often driven by heritage and nostalgia, Ray-Ban chose to look forward by appointing A$AP Rocky as its first-ever Creative Director, pushing traditional celebrity endorsements toward deeper cultural co-creation.</p>
 
-                            <p className="text-xl anim_txt opacity-0 translate-y-[2rem] ">    Rather than simply lending his image to a campaign, Rocky was given creative control over product design, visual language and brand storytelling. The result is the Blacked Out Collection, a reinterpretation of classic Ray-Ban silhouettes infused with sharper lines, darker tones and luxury details that reflect contemporary street culture and high fashion sensibilities.</p>
+                            <p className=" anim_txt text-[2rem] leading-tight opacity-0 translate-y-[2rem] ">    Rather than simply lending his image to a campaign, Rocky was given creative control over product design, visual language and brand storytelling. The result is the Blacked Out Collection, a reinterpretation of classic Ray-Ban silhouettes infused with sharper lines, darker tones and luxury details that reflect contemporary street culture and high fashion sensibilities.</p>
                         </div>
                         <div className=" w-full aspect-video anim_txt opacity-0 translate-y-[2rem]">
                             <img src="https://www.datocms-assets.com/106915/1746532976-cover.jpg?auto=format&dpr=1.5&fit=max&h=1000&q=85&w=1000" alt="" />
                         </div>
                         <div className="space-y-5 px-32  ">
-                            <p className="text-xl anim_txt opacity-0 translate-y-[2rem] ">The collaboration between A$AP Rocky and Ray-Ban represents a bold strategic move for one of the most iconic brands in global eyewear. In a category often driven by heritage and nostalgia, Ray-Ban chose to look forward by appointing A$AP Rocky as its first-ever Creative Director, pushing traditional celebrity endorsements toward deeper cultural co-creation.
+                            <p className="text-[2rem] anim_txt leading-tight opacity-0 translate-y-[2rem] ">The collaboration between A$AP Rocky and Ray-Ban represents a bold strategic move for one of the most iconic brands in global eyewear. In a category often driven by heritage and nostalgia, Ray-Ban chose to look forward by appointing A$AP Rocky as its first-ever Creative Director, pushing traditional celebrity endorsements toward deeper cultural co-creation.
                                 <br /> <br />
                                 Rather than simply lending his image to a campaign, Rocky was given creative control over product design, visual language and brand storytelling. The result is the Blacked Out Collection, a reinterpretation of classic Ray-Ban silhouettes infused with sharper lines, darker tones and luxury details that reflect contemporary street culture and high fashion sensibilities.</p>
                         </div>
@@ -218,30 +218,30 @@ export default function ProjectDetail() {
 
                             <div className="col-span-3">
                                 <img src="https://www.datocms-assets.com/106915/1746532990-1.jpg?auto=format&fit=max&h=1000&q=85&w=1000" alt="" />
-                                <p className="pp_mono mt-2">01</p>
+                                <p className="pp_mono text-2xl mt-2">01</p>
                             </div>
                             <div className=""></div>
                             <div className=""></div>
                             <div className="  col-span-2">
                                 <img src="https://www.datocms-assets.com/106915/1746533001-2.jpg?auto=format&fit=max&h=1000&q=85&w=1000" alt="" />
-                                <p className="pp_mono mt-2">02</p>
+                                <p className="pp_mono text-2xl mt-2">02</p>
                             </div>
                             <div className=""></div>
                             <div className=""></div>
                             <div className="col-span-4">
                                 <img src="https://www.datocms-assets.com/106915/1746533011-3.jpg?auto=format&fit=max&h=1000&q=85&w=1000" alt="" />
-                                <p className="pp_mono mt-2">03</p>
+                                <p className="pp_mono text-2xl mt-2">03</p>
                             </div>
                             <div className=""></div>
                             <div className="col-span-2">
                                 <img src="https://www.datocms-assets.com/106915/1746533021-4.jpg?auto=format&fit=max&h=1000&q=85&w=1000" alt="" />
-                                <p className="pp_mono mt-2">04</p>
+                                <p className="pp_mono text-2xl mt-2">04</p>
                             </div>
                             <div className=""></div>
                             <div className=""></div>
                             <div className="col-span-3">
                                 <img src="https://www.datocms-assets.com/106915/1746533031-5.jpg?auto=format&fit=max&h=1000&q=85&w=1000" alt="" />
-                                <p className="pp_mono mt-2">05</p>
+                                <p className="pp_mono text-2xl mt-2">05</p>
                             </div>
 
                         </div>

@@ -1,6 +1,7 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
+
+const lerp = (a, b, t) => a + (b - a) * t;
 
 export default function InfiniteMarquee({
     children,
@@ -12,7 +13,7 @@ export default function InfiniteMarquee({
 }) {
     const containerRef = useRef(null);
     const trackRef = useRef(null);
-
+    const smoothVelocity = useRef(0);
     const [contentWidth, setContentWidth] = useState(0);
 
     const velocity = useRef(0);
@@ -35,7 +36,6 @@ export default function InfiniteMarquee({
         if (!trackRef.current) return;
 
         const el = trackRef.current;
-        let frame;
 
         const measure = () => {
             const width = el.scrollWidth / 2;
@@ -46,19 +46,12 @@ export default function InfiniteMarquee({
             });
         };
 
-        frame = requestAnimationFrame(measure);
+        measure();
 
-        const observer = new ResizeObserver(() => {
-            cancelAnimationFrame(frame);
-            frame = requestAnimationFrame(measure);
-        });
-
+        const observer = new ResizeObserver(measure);
         observer.observe(el);
 
-        return () => {
-            observer.disconnect();
-            cancelAnimationFrame(frame);
-        };
+        return () => observer.disconnect();
     }, []);
 
     useEffect(() => {
@@ -90,16 +83,19 @@ export default function InfiniteMarquee({
                 return;
             }
 
-            position.current += velocity.current;
+            smoothVelocity.current = lerp(
+                smoothVelocity.current,
+                velocity.current,
+                isDragging.current ? 0.35 : 0.08
+            );
 
-            velocity.current *= isTouchRef.current ? 0.92 : 0.90;
+            position.current += smoothVelocity.current;
 
-            // kill micro jitter
-            if (Math.abs(velocity.current) < 0.05) {
-                velocity.current = 0;
-            }
+            const friction = isDragging.current ? 0.85 : 0.92;
+            velocity.current *= friction;
 
-            // infinite loop
+            if (Math.abs(velocity.current) < 0.01) velocity.current = 0;
+
             if (position.current <= -contentWidth) {
                 position.current += contentWidth;
             } else if (position.current >= 0) {
@@ -107,12 +103,12 @@ export default function InfiniteMarquee({
             }
 
             if (trackRef.current) {
-                trackRef.current.style.transform = `translate3d(${position.current}px,0,0)`;
+                trackRef.current.style.transform =
+                    `translate3d(${position.current}px,0,0)`;
 
-                // rotation effect
                 targetRotation.current = Math.max(
-                    Math.min(velocity.current * 0.6, 50),
-                    -50
+                    Math.min(velocity.current, 80),
+                    -80
                 );
 
                 rotation.current +=
@@ -123,7 +119,8 @@ export default function InfiniteMarquee({
                     trackRef.current.querySelectorAll(".img_card");
 
                 cards.forEach((card) => {
-                    card.style.transform = `rotateY(${rotation.current}deg)`;
+                    card.style.transform =
+                        `rotateY(${rotation.current}deg)`;
                 });
             }
 
@@ -172,100 +169,89 @@ export default function InfiniteMarquee({
         };
     }, [speed]);
 
-useEffect(() => {
-    if (!draggable || !containerRef.current) return;
-
-    const el = containerRef.current;
-
-    let pointerDownTarget = null;
-
-    const onPointerDown = (e) => {
-        if (e.pointerType === "mouse" && e.button !== 0) return;
-
-        isDragging.current = true;
-        lastX.current = e.clientX;
-        dragDistance.current = 0;
-        isTouchRef.current = e.pointerType === "touch";
-
-        pointerDownTarget = e.target;
-
-        el.setPointerCapture(e.pointerId);
-    };
-
-    const onPointerMove = (e) => {
-        if (!isDragging.current) return;
-
-        const delta = e.clientX - lastX.current;
-        dragDistance.current += Math.abs(delta);
-
-        velocity.current = delta * (isTouchRef.current ? 3 : 1);
-        lastX.current = e.clientX;
-    };
-
-    const onPointerUp = (e) => {
-        const isClick = dragDistance.current < 6;
-
-        isDragging.current = false;
-
-        try {
-            el.releasePointerCapture(e.pointerId);
-        } catch {}
-
-        // 🔥 restore click
-        if (
-            isClick &&
-            pointerDownTarget &&
-            pointerDownTarget instanceof HTMLElement &&
-            pointerDownTarget !== el
-        ) {
-            pointerDownTarget.click();
-        }
-
-        pointerDownTarget = null;
-    };
-
-    window.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-    window.addEventListener("pointercancel", onPointerUp);
-
-    return () => {
-        window.removeEventListener("pointerdown", onPointerDown);
-        window.removeEventListener("pointermove", onPointerMove);
-        window.removeEventListener("pointerup", onPointerUp);
-        window.removeEventListener("pointercancel", onPointerUp);
-    };
-}, [draggable]);
-
     useEffect(() => {
-        if (!containerRef.current) return;
+        if (!draggable || !containerRef.current) return;
 
         const el = containerRef.current;
+        let pointerDownTarget = null;
 
-        const onWheelCapture = (e) => {
-            if (Math.abs(e.deltaX) > 0) {
-                e.preventDefault();
-            }
+        const onPointerDown = (e) => {
+            if (e.pointerType === "mouse" && e.button !== 0) return;
+
+            isDragging.current = true;
+            lastX.current = e.clientX;
+            dragDistance.current = 0;
+            isTouchRef.current = e.pointerType === "touch";
+
+            pointerDownTarget = e.target;
+
+            el.setPointerCapture(e.pointerId);
         };
 
-        el.addEventListener("wheel", onWheelCapture, { passive: false });
+        const onPointerMove = (e) => {
+            if (!isDragging.current) return;
+
+            const rawDelta = e.clientX - lastX.current;
+            dragDistance.current += Math.abs(rawDelta);
+
+            const boostedDelta =
+                Math.sign(rawDelta) *
+                Math.pow(Math.abs(rawDelta), 1.1) *
+                (isTouchRef.current ? 1.5 : .8);
+
+            velocity.current += boostedDelta * 0.5;
+
+            lastX.current = e.clientX;
+        };
+
+        const onPointerUp = (e) => {
+            const isClick = dragDistance.current < 6;
+
+            isDragging.current = false;
+
+            velocity.current *= isTouchRef.current ? 1.5 : 1.3;
+
+            try {
+                el.releasePointerCapture(e.pointerId);
+            } catch { }
+
+            if (
+                isClick &&
+                pointerDownTarget &&
+                pointerDownTarget instanceof HTMLElement &&
+                pointerDownTarget !== el
+            ) {
+                pointerDownTarget.click();
+            }
+
+            pointerDownTarget = null;
+        };
+
+        window.addEventListener("pointerdown", onPointerDown);
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointerup", onPointerUp);
+        window.addEventListener("pointercancel", onPointerUp);
 
         return () => {
-            el.removeEventListener("wheel", onWheelCapture);
+            window.removeEventListener("pointerdown", onPointerDown);
+            window.removeEventListener("pointermove", onPointerMove);
+            window.removeEventListener("pointerup", onPointerUp);
+            window.removeEventListener("pointercancel", onPointerUp);
         };
-    }, []);
+    }, [draggable]);
 
     useEffect(() => {
-    if (!trackRef.current) return;
+        if (!trackRef.current) return;
 
-    const interval = setInterval(() => {
-        if (onUpdate) {
-            onUpdate(-position.current);
-        }
-    }, 16);
+        const interval = setInterval(() => {
+            if (onUpdate) {
+                onUpdate(-position.current);
+            }
+        }, 16);
 
-    return () => clearInterval(interval);
-}, []);
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <div
             ref={containerRef}

@@ -17,13 +17,15 @@ const navLinks = [
 ];
 
 const Header = () => {
-  const hasIntroLoaded  = useAppStore((state) => state.hasIntroLoaded);
+  const hasIntroLoaded = useAppStore((state) => state.hasIntroLoaded);
   const pathname = usePathname();
-  const [isPlaying, setIsPlaying] = useState(false);
+  const isPlaying = useAppStore((state) => state.isMusicPlaying);
+  const setMusicPlaying = useAppStore((state) => state.setMusicPlaying);
   const [activeTrack, setActiveTrack] = useState(musicData[0]);
+  const prevTrackRef = useRef(null);
   const [prevTrack, setPrevTrack] = useState(null);
   const [isPlayerVisible, setIsPlayerVisible] = useState(false);
-
+  const isToggling = useRef(false);
   const audioRef = useRef(null);
   const clickAudioRef = useRef(null);
 
@@ -85,8 +87,13 @@ const Header = () => {
   }, [activeTrack]);
 
   const handlePlayToggle = () => {
+    if (isToggling.current) return;
+    isToggling.current = true;
     sound.play("click");
-    setIsPlaying((prev) => !prev);
+    setMusicPlaying(!isPlaying);
+    setTimeout(() => {
+      isToggling.current = false;
+    }, 200);
   };
 
   return (
@@ -114,7 +121,10 @@ const Header = () => {
         <audio ref={audioRef} playsInline preload="auto" />
 
         <div
-          onClick={handlePlayToggle}
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePlayToggle();
+          }}
           onMouseEnter={() => setIsPlayerVisible(true)}
           className={`running_music_preview ${!hasIntroLoaded ? "pointer-events-none" : "pointer-events-auto"} transition-all duration-300 cursor-pointer w-[42%] border flex gap-2 items-center p-1.5 border-black/10 rounded-sm bg-gray-50`}
         >
@@ -129,14 +139,12 @@ const Header = () => {
               {prevTrack && (
                 <div className="absolute inset-0 old_track">
                   <img src={prevTrack.poster} className="cover" />
-                  <div>{prevTrack.singer} - {prevTrack.title}</div>
                 </div>
               )}
 
               {/* NEW */}
               <div className="absolute inset-0 new_track">
                 <img src={activeTrack.poster} className="cover" />
-                <div>{activeTrack.singer} - {activeTrack.title}</div>
               </div>
 
             </div>
@@ -173,12 +181,16 @@ const Header = () => {
             <div
               key={item.id}
               onClick={() => {
+                if (activeTrack.id === item.id) return;
+
                 sound.play("click");
 
-                setPrevTrack(activeTrack);
-                setActiveTrack(item);
+                setActiveTrack((current) => {
+                  setPrevTrack(current);
+                  return item;
+                });
 
-                if (!isPlaying) setIsPlaying(true);
+                setMusicPlaying(true);
               }}
               className={`w-full text-xl group h-20 cursor-pointer p-1.5 border-b border-black/10 last:border-none flex items-center gap-x-4 pr-4 transition-colors ${activeTrack.id === item.id
                 ? "bg-gray-200"

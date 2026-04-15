@@ -94,6 +94,7 @@ export default function ProjectDetail() {
         tl.to([".anim_txt", ".close_btn"], {
             transform: "translateY(0)",
             opacity: 1,
+            duration:.8,
             ease: "expo.out",
             stagger: 0.05,
         })

@@ -2,6 +2,10 @@
   perspective: 1000px;
 }
 
+[data-flip-id] {
+  will-change: transform;
+}
+
 .img_card {
   transform-style: preserve-3d;
   will-change: transform;

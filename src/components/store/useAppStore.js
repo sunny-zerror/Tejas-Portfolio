@@ -7,10 +7,10 @@ export const useAppStore = create((set) => ({
   markIntroLoaded: () => set({ hasIntroLoaded: true }),
   resetIntro: () => set({ hasIntroLoaded: false }),
 
-  musicEnabled: false,
-  setMusicEnabled: (value) => set({ musicEnabled: value }),
-  toggleMusic: () =>
-    set((state) => ({
-      musicEnabled: !state.musicEnabled,
+
+  isMusicPlaying: false,
+  setMusicPlaying: (value) =>
+    set(() => ({
+      isMusicPlaying: value,
     })),
 }));

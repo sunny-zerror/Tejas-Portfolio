@@ -1,32 +1,34 @@
 "use client";
 
 import React, { forwardRef, useImperativeHandle, useRef, useEffect } from "react";
-import gsap from "gsap";
 import { sound } from "@/utils/sound";
+import { useAppStore } from "../store/useAppStore";
 
-// Utility lerp (linear interpolation)
 const lerp = (start, end, amt) => (1 - amt) * start + amt * end;
 
 const SticksCanvas = forwardRef(({
     lw = 1,
     gap = 10,
-    mh = 15, // min height
-    mjh = 22, // min height for 'special' items
+    mh = 15,
+    mjh = 22,
     alpha = 0.25,
-    by = null, // y position from bottom
+    by = null,
     hover = true,
     near = 10,
     boost = 18,
     fall = 0.55,
     ease = 0.1
 }, ref) => {
+
+    const isMusicPlaying = useAppStore((state) => state.isMusicPlaying);
+    const hasUserInteracted = useRef(false);
     const canvasRef = useRef(null);
     const isDragging = useRef(false);
+
     const playFx = () => {
         sound.play("fx");
     };
-    const dragOffsetX = useRef(0);
-    // Local state mirrored from original vue version
+
     const state = useRef({
         playedIndex: null,
         ctx: null,
@@ -149,7 +151,11 @@ const SticksCanvas = forwardRef(({
             if (itemIndex === centerIndex) {
                 const isMax = Math.abs(finalH - (baseH + (50 - baseH))) < 30;
 
-                if (isMax && s.playedIndex !== itemIndex) {
+                if (
+                    (hasUserInteracted.current || isMusicPlaying) &&
+                    isMax &&
+                    s.playedIndex !== itemIndex
+                ) {
                     playFx();
                     s.playedIndex = itemIndex;
                 }
@@ -163,7 +169,6 @@ const SticksCanvas = forwardRef(({
         if (!canvasRef.current) return;
         const c = canvasRef.current;
 
-        // Parent container width/height
         const pw = c.parentElement.clientWidth;
         const ph = c.parentElement.clientHeight;
 
@@ -177,7 +182,7 @@ const SticksCanvas = forwardRef(({
         const ctx = c.getContext("2d");
         state.current.ctx = ctx;
         ctx.setTransform(state.current.dpr, 0, 0, state.current.dpr, 0, 0);
-        ctx.strokeStyle = "#000"; // Replaced hardcoded black with white for visibility in dark mode!
+        ctx.strokeStyle = "#000";
         ctx.lineWidth = lw;
 
         state.current.itemWidth = lw + gap;
@@ -229,74 +234,76 @@ const SticksCanvas = forwardRef(({
     }, []);
 
     useEffect(() => {
-    const handlePointerUp = () => {
-        isDragging.current = false;
+        const handlePointerUp = () => {
+            isDragging.current = false;
 
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-    };
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
+        };
 
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
+        window.addEventListener("pointerup", handlePointerUp);
+        window.addEventListener("pointercancel", handlePointerUp);
 
-    return () => {
-        window.removeEventListener("pointerup", handlePointerUp);
-        window.removeEventListener("pointercancel", handlePointerUp);
-    };
-}, []);
+        return () => {
+            window.removeEventListener("pointerup", handlePointerUp);
+            window.removeEventListener("pointercancel", handlePointerUp);
+        };
+    }, []);
 
-useEffect(() => {
-    const handlePointerMove = (e) => {
-        if (!isDragging.current) return;
+    useEffect(() => {
+        const handlePointerMove = (e) => {
+            if (!isDragging.current) return;
 
-        const rect = canvasRef.current?.getBoundingClientRect();
-        if (!rect) return;
+            const rect = canvasRef.current?.getBoundingClientRect();
+            if (!rect) return;
 
-        state.current.mouseX = e.clientX - rect.left;
-    };
+            state.current.mouseX = e.clientX - rect.left;
+        };
 
-    window.addEventListener("pointermove", handlePointerMove);
+        window.addEventListener("pointermove", handlePointerMove);
 
-    return () => {
-        window.removeEventListener("pointermove", handlePointerMove);
-    };
-}, []);
+        return () => {
+            window.removeEventListener("pointermove", handlePointerMove);
+        };
+    }, []);
+
     return (
         <div
             className="relative h-14  w-full"
             style={{ cursor: "grab" }}
-           onPointerDown={(e) => {
-    isDragging.current = true;
+            onPointerDown={(e) => {
+                hasUserInteracted.current = true; // ✅ unlock sound
 
-    state.current.mouseHover = true;
+                isDragging.current = true;
+                state.current.mouseHover = true;
 
-    const rect = canvasRef.current.getBoundingClientRect();
-    state.current.mouseX = e.clientX - rect.left;
+                const rect = canvasRef.current.getBoundingClientRect();
+                state.current.mouseX = e.clientX - rect.left;
 
-    document.body.style.cursor = "grabbing";
-    document.body.style.userSelect = "none";
+                document.body.style.cursor = "grabbing";
+                document.body.style.userSelect = "none";
 
-    e.currentTarget.setPointerCapture(e.pointerId);
-}}
+                e.currentTarget.setPointerCapture(e.pointerId);
+            }}
 
-onPointerMove={(e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    state.current.mouseX = e.clientX - rect.left;
-}}
+            onPointerMove={(e) => {
+                const rect = canvasRef.current.getBoundingClientRect();
+                state.current.mouseX = e.clientX - rect.left;
+            }}
 
-onPointerCancel={() => {
-    isDragging.current = false;
+            onPointerCancel={() => {
+                isDragging.current = false;
 
-    document.body.style.cursor = "";
-    document.body.style.userSelect = "";
-}}
+                document.body.style.cursor = "";
+                document.body.style.userSelect = "";
+            }}
 
-onPointerLeave={() => {
-    if (!isDragging.current) {
-        document.body.style.cursor = "";
-    }
-}}
-         
+            onPointerLeave={() => {
+                if (!isDragging.current) {
+                    document.body.style.cursor = "";
+                }
+            }}
+
 
 
             onMouseEnter={() => state.current.mouseHover = true}
